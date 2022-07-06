@@ -1,4 +1,4 @@
-service vendor.usb-gadget-hal-1-1 /vendor/bin/hw/android.hardware.usb.gadget-service.coral
+service vendor.usb-gadget-hal /vendor/bin/hw/android.hardware.usb.gadget-service.coral
     class hal
     user system
     group system shell mtp

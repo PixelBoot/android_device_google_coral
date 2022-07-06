@@ -14,38 +14,31 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.usb.gadget-service.coral"
+#define LOG_TAG "android.hardware.usb.gadget-service.sunfish"
 
-#include <hidl/HidlTransportSupport.h>
+#include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
+#include <utils/Log.h>
 #include "UsbGadget.h"
 
 using android::sp;
 
-// libhwbinder:
-using android::hardware::configureRpcThreadpool;
-using android::hardware::joinRpcThreadpool;
-
-// Generated HIDL files
-using android::hardware::usb::gadget::V1_1::IUsbGadget;
-using android::hardware::usb::gadget::V1_1::implementation::UsbGadget;
-
 using android::OK;
+using android::sp;
 using android::status_t;
 
+using aidl::android::hardware::usb::gadget::UsbGadget;
+
 int main() {
-    android::sp<IUsbGadget> service = new UsbGadget();
+    ABinderProcess_setThreadPoolMaxThreadCount(0);
+    std::shared_ptr<UsbGadget> usbgadget = ndk::SharedRefBase::make<UsbGadget>();
 
-    configureRpcThreadpool(2, true /*callerWillJoin*/);
-    status_t status = service->registerAsService();
+    const std::string instance = std::string() + UsbGadget::descriptor + "/default";
+    binder_status_t status = AServiceManager_addService(usbgadget->asBinder().get(), instance.c_str());
+    CHECK(status == STATUS_OK);
 
-    if (status != OK) {
-        ALOGE("Cannot register USB Gadget HAL service");
-        return 1;
-    }
-
-    ALOGI("USB gadget HAL Ready.");
-    joinRpcThreadpool();
-    // Under noraml cases, execution will not reach this line.
-    ALOGI("USB gadget HAL failed to join thread pool.");
-    return 1;
+    ALOGV("AIDL USB Gadget HAL about to start");
+    ABinderProcess_joinThreadPool();
+    return -1; // Should never be reached
 }
