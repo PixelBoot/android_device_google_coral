@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <android-base/properties.h>
+
 #include <aidl/android/frameworks/stats/IStats.h>
 
 namespace aidl {
@@ -33,6 +35,9 @@ namespace android {
 namespace hardware {
 namespace usb {
 namespace gadget {
+
+using ::android::base::GetBoolProperty;
+using ::android::hardware::google::pixel::usb::kUvcEnabled;
 
 UsbGadget::UsbGadget() {
     if (access(OS_DESC_PATH, R_OK) != 0) {
@@ -106,8 +111,8 @@ Status UsbGadget::tearDownGadget() {
     return Status::SUCCESS;
 }
 
-static Status validateAndSetVidPid(uint64_t functions) {
-    Status ret = Status::SUCCESS;
+static Status validateAndSetVidPid(int64_t functions) {
+    Status ret;
     std::string vendorFunctions = getVendorFunctions();
 
     switch (functions) {
@@ -256,6 +261,28 @@ static Status validateAndSetVidPid(uint64_t functions) {
             if (!(vendorFunctions == "user" || vendorFunctions == ""))
                 ALOGE("Invalid vendorFunctions set: %s", vendorFunctions.c_str());
             ret = Status(setVidPid("0x18d1", "0x2d05"));
+            break;
+        case GadgetFunction::UVC:
+            if (!(vendorFunctions == "user" || vendorFunctions == "")) {
+                ALOGE("Invalid vendorFunctions set: %s", vendorFunctions.c_str());
+                ret = Status::CONFIGURATION_NOT_SUPPORTED;
+            } else if (!GetBoolProperty(kUvcEnabled, false)) {
+                ALOGE("UVC function not enabled by config");
+                ret = Status::CONFIGURATION_NOT_SUPPORTED;
+            } else {
+                ret = Status(setVidPid("0x18d1", "0x4eed"));
+            }
+            break;
+        case GadgetFunction::ADB | GadgetFunction::UVC:
+            if (!(vendorFunctions == "user" || vendorFunctions == "")) {
+                ALOGE("Invalid vendorFunctions set: %s", vendorFunctions.c_str());
+                ret = Status::CONFIGURATION_NOT_SUPPORTED;
+            } else if (!GetBoolProperty(kUvcEnabled, false)) {
+                ALOGE("UVC function not enabled by config");
+                ret = Status::CONFIGURATION_NOT_SUPPORTED;
+            } else {
+                ret = Status(setVidPid("0x18d1", "0x4eee"));
+            }
             break;
         default:
             ALOGE("Combination not supported");
