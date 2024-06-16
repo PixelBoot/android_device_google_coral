@@ -486,6 +486,10 @@ PRODUCT_PACKAGES += \
     PresencePolling \
     RcsService
 
+# DeviceAsWebcam
+PRODUCT_PACKAGES += \
+    DeviceAsWebcam
+
 # Build necessary packages for system_ext
 
 # Display
@@ -1072,6 +1076,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Configure renderengine backend
 PRODUCT_PRODUCT_PROPERTIES += \
     debug.renderengine.backend=skiavkthreaded
+
+# Enable DeviceAsWebcam support
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.usb.uvc.enabled=true
 
 # Do not skip init trigger by default
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
